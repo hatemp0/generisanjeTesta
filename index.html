@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generisanje testa</title>
+    <style>
+        .correct {
+            background-color: green;
+        }
+        .incorrect {
+            background-color: red;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 20px;
+        }
+        .question {
+            margin-bottom: 20px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .answer {
+            margin-top: 10px;
+        }
+        .answer label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        #quiz-container {
+            width: 95%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+    
+</head>
+<body>
+    <div id="quiz-container">
+
+    </div>
+    <script defer>
+        const GMin = 0;
+        const GMax = 239;
+        const lista_id_pitanja = [];
+        const lista_pitanja = [];
+        generisiIdPitanja()
+        function random(min, max){
+            return Math.random()*(max-min) + min;
+        }
+
+        function generisiIdPitanja(){
+            for(let i = 0; i < 20; i++){
+                randomNumber = parseInt(random(GMin,GMax));
+                while(lista_id_pitanja.includes(randomNumber))
+                    randomNumber = parseInt(random(GMin,GMax));
+                lista_id_pitanja[i] = randomNumber;
+            }
+            lista_id_pitanja.sort();
+            citajPitanjaIzFajla(lista_id_pitanja)
+        }
+        
+        
+
+        function citajPitanjaIzFajla(numberArray) {
+            const fileName = 'pitanja.txt'; 
+
+            // Fetch the file content asynchronously
+            fetch(fileName)
+                .then(response => response.text())
+                .then(fileContent => {
+                    const rows = fileContent.split('\n');
+
+                    
+                    for (const number of numberArray) {
+                        const startRow = number * 4;
+                        const question = rows[startRow];
+                        const a = rows[startRow + 1];
+                        const b = rows[startRow + 2];
+                        const c = rows[startRow + 3];
+
+                        lista_pitanja.push({ question: question, a: a, b: b, c: c});
+                    }
+
+                })
+                .catch(error => {
+                    console.error('Error fetching file:', error);
+                });
+            dodajOdgovore(lista_id_pitanja);
+        }
+
+        async function dodajOdgovore(numberArray) {
+    try {
+        const fileName = 'resenja.txt';
+        const response = await fetch(fileName);
+        const fileContent = await response.text();
+        const rows = fileContent.split('\n');
+
+        let i = 0;
+        for (const number of numberArray) {
+            if (i < lista_pitanja.length) {
+                const ans = rows[number];
+                lista_pitanja[i].answer = ans;
+                i++;
+            } else {
+                console.warn(`Index ${i} exceeds the length of lista_pitanja.`);
+            }
+        }
+
+        console.log(lista_pitanja);
+    } catch (error) {
+        console.error('Error fetching file:', error);
+    }
+    for(let i = 0; i < 20; i++){
+        console.log(lista_pitanja[i]);
+        kreirajPitanjeElement(lista_pitanja[i],i);
+    }
+}
+
+        function kreirajPitanjeElement(questionObj, index) {
+            const container = document.getElementById("quiz-container");
+            
+            const questionDiv = document.createElement("div");
+            questionDiv.classList.add("question");
+
+            const questionText = document.createElement("p");
+            questionText.textContent = `${index + 1}. ${questionObj.question}`;
+
+            const answerDiv = document.createElement("div");
+            answerDiv.classList.add("answer");
+
+            const optionA = createOption("a", questionObj.a, index);
+            const optionB = createOption("b", questionObj.b, index);
+            const optionC = createOption("c", questionObj.c, index);
+            
+            answerDiv.appendChild(optionA);
+            answerDiv.appendChild(optionB);
+            answerDiv.appendChild(optionC);
+
+            questionDiv.appendChild(questionText);
+            questionDiv.appendChild(answerDiv);
+
+            container.appendChild(questionDiv);
+        }
+
+        function createOption(value, text, index) {
+            let classB = "";
+            const label = document.createElement("label");
+            const input = document.createElement("input");
+            input.type = "radio";
+            input.name = `q${index + 1}`;
+            input.value = value;
+
+            label.appendChild(input);
+            label.innerHTML += ` ${text}`;
+            if(value == lista_pitanja[index].answer.trim()){
+                classB = "correct";
+            }
+            else
+                classB = "incorrect";
+            
+            label.addEventListener("click", () => {
+                label.classList.add(classB);
+            });
+
+            return label;
+        }
+        
+    </script>
+</body>
+</html>
